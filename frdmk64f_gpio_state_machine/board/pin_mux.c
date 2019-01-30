@@ -24,10 +24,12 @@ processor_version: 2.0.0
 
 
 #define PIN4_IDX                         4u   /*!< Pin number for pin 4 in a port */
-#define PIN6_IDX                         6u   /*!< Pin number for pin 4 in a port */
+#define PIN6_IDX                         6u   /*!< Pin number for pin 6 in a port */
 #define PIN16_IDX                       16u   /*!< Pin number for pin 16 in a port */
 #define PIN17_IDX                       17u   /*!< Pin number for pin 17 in a port */
-#define PIN22_IDX                       22u   /*!< Pin number for pin 22 in a port */
+#define PIN21_IDX                       21u   /*!< Pin number for pin 21 / 0x15 in a port */
+#define PIN22_IDX                       22u   /*!< Pin number for pin 22 / 0x16 in a port */
+#define PIN26_IDX                       26u   /*!< Pin number for pin 26 / 0x1A in a port */
 #define SOPT5_UART0TXSRC_UART_TX      0x00u   /*!< UART 0 transmit data source select: UART0_TX pin */
 
 /*
@@ -52,9 +54,10 @@ BOARD_InitPins:
 void BOARD_InitPins(void) {
   CLOCK_EnableClock(kCLOCK_PortA);                           /* Port A Clock Gate Control: Clock enabled */
   CLOCK_EnableClock(kCLOCK_PortB);                           /* Port B Clock Gate Control: Clock enabled */
-  CLOCK_EnableClock(kCLOCK_PortC);                           /* Port B Clock Gate Control: Clock enabled */
+  CLOCK_EnableClock(kCLOCK_PortC);                           /* Port C Clock Gate Control: Clock enabled */
+  CLOCK_EnableClock(kCLOCK_PortE);                           /* Port E Clock Gate Control: Clock enabled */
 
-  const port_pin_config_t porta4_pin38_config = {
+  const port_pin_config_t portX_pinY_config = {
     kPORT_PullUp,                                            /* Internal pull-up resistor is enabled */
     kPORT_FastSlewRate,                                      /* Fast slew rate is configured */
     kPORT_PassiveFilterDisable,                              /* Passive filter is disabled */
@@ -63,11 +66,16 @@ void BOARD_InitPins(void) {
     kPORT_MuxAsGpio,                                         /* Pin is configured as PTA4 */
     kPORT_UnlockRegister                                     /* Pin Control Register fields [15:0] are not locked */
   };
-  PORT_SetPinConfig(PORTA, PIN4_IDX, &porta4_pin38_config);  /* PORTA4 (pin 38) is configured as PTA4 */
+
+  PORT_SetPinConfig(PORTA, PIN4_IDX, &portX_pinY_config);  /* PORTA4 (pin 38) is configured as PTA4 */
+  PORT_SetPinConfig(PORTC, PIN6_IDX, &portX_pinY_config);  /* PORTC6 (pin **) is configured as PTC6 */
   PORT_SetPinMux(PORTB, PIN16_IDX, kPORT_MuxAlt3);           /* PORTB16 (pin 62) is configured as UART0_RX */
   PORT_SetPinMux(PORTB, PIN17_IDX, kPORT_MuxAlt3);           /* PORTB17 (pin 63) is configured as UART0_TX */
   PORT_SetPinMux(PORTB, PIN22_IDX, kPORT_MuxAsGpio);         /* PORTB22 (pin 68) is configured as PTB22 */
-  PORT_SetPinConfig(PORTC, PIN6_IDX, &porta4_pin38_config);  /* PORTA4 (pin 38) is configured as PTA4 */
+  PORT_SetPinMux(PORTB, PIN21_IDX, kPORT_MuxAsGpio);         /* PORTB21 (pin **) is configured as PTB21 */
+  PORT_SetPinMux(PORTE, PIN26_IDX, kPORT_MuxAsGpio);         /* PORTE26 (pin **) is configured as PTE26 */
+
+
   SIM->SOPT5 = ((SIM->SOPT5 &
     (~(SIM_SOPT5_UART0TXSRC_MASK)))                          /* Mask bits to zero which are setting */
       | SIM_SOPT5_UART0TXSRC(SOPT5_UART0TXSRC_UART_TX)       /* UART 0 transmit data source select: UART0_TX pin */

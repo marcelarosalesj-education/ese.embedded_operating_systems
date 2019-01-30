@@ -18,8 +18,16 @@
  ******************************************************************************/
 
 /* LED RED definitions*/
-#define BOARD_LED_GPIO BOARD_LED_RED_GPIO
-#define BOARD_LED_GPIO_PIN BOARD_LED_RED_GPIO_PIN
+#define BOARD_LED_GPIO_RED BOARD_LED_RED_GPIO
+#define BOARD_LED_GPIO_PIN_RED BOARD_LED_RED_GPIO_PIN
+
+/* LED BLUE definitions*/
+#define BOARD_LED_GPIO_BLUE BOARD_LED_BLUE_GPIO
+#define BOARD_LED_GPIO_PIN_BLUE BOARD_LED_BLUE_GPIO_PIN
+
+/* LED GREEN definitions*/
+#define BOARD_LED_GPIO_GREEN BOARD_LED_GREEN_GPIO
+#define BOARD_LED_GPIO_PIN_GREEN BOARD_LED_GREEN_GPIO_PIN
 
 /* SW3 definitions*/
 #define BOARD_SW_GPIO_SW3 BOARD_SW3_GPIO
@@ -91,19 +99,25 @@ void BOARD_SW_IRQ_HANDLER_SW2(void)
 #endif
 }
 
+void delay(void)
+{
+    volatile uint32_t i = 0;
+    for (i = 0; i < 800000; ++i)
+    {
+        __asm("NOP"); /* delay */
+    }
+}
+
 /*!
  * @brief Main function
  */
 int main(void)
 {
+	int count = 0;
     /* Define the init structure for the input switch pin */
-    gpio_pin_config_t sw_config_sw3 = {
+    gpio_pin_config_t sw_config = {
         kGPIO_DigitalInput, 0,
     };
-
-    gpio_pin_config_t sw_config_sw2 = {
-            kGPIO_DigitalInput, 0,
-        };
 
     /* Define the init structure for the output LED pin */
     gpio_pin_config_t led_config = {
@@ -127,14 +141,20 @@ int main(void)
     PORT_SetPinInterruptConfig(BOARD_SW_PORT_SW2, BOARD_SW_GPIO_PIN_SW2, kPORT_InterruptFallingEdge);
 #endif
     EnableIRQ(BOARD_SW_IRQ_SW3);
-    GPIO_PinInit(BOARD_SW_GPIO_SW3, BOARD_SW_GPIO_PIN_SW3, &sw_config_sw3);
+    GPIO_PinInit(BOARD_SW_GPIO_SW3, BOARD_SW_GPIO_PIN_SW3, &sw_config);
     EnableIRQ(BOARD_SW_IRQ_SW2);
-    GPIO_PinInit(BOARD_SW_GPIO_SW2, BOARD_SW_GPIO_PIN_SW2, &sw_config_sw2);
+    GPIO_PinInit(BOARD_SW_GPIO_SW2, BOARD_SW_GPIO_PIN_SW2, &sw_config);
 
 
     /* Init output LED GPIO. */
-    GPIO_PinInit(BOARD_LED_GPIO, BOARD_LED_GPIO_PIN, &led_config);
+    GPIO_PinInit(BOARD_LED_GPIO_RED, BOARD_LED_GPIO_PIN_RED, &led_config);
+    GPIO_PinInit(BOARD_LED_GPIO_BLUE, BOARD_LED_GPIO_PIN_BLUE, &led_config);
+    GPIO_PinInit(BOARD_LED_GPIO_GREEN, BOARD_LED_GPIO_PIN_GREEN, &led_config);
 
+    /* Turn Off LEDs before start */
+    GPIO_PortSet(BOARD_LED_GPIO_RED, 1U << BOARD_LED_GPIO_PIN_RED);
+    GPIO_PortSet(BOARD_LED_GPIO_BLUE, 1U << BOARD_LED_GPIO_PIN_BLUE);
+    GPIO_PortSet(BOARD_LED_GPIO_GREEN, 1U << BOARD_LED_GPIO_PIN_GREEN);
 
     while (1)
     {
@@ -142,17 +162,33 @@ int main(void)
         {
             PRINTF(" %s is pressed \r\n", BOARD_SW_NAME_SW3);
             /* Toggle LED. */
-            GPIO_PortToggle(BOARD_LED_GPIO, 1U << BOARD_LED_GPIO_PIN);
+            GPIO_PortToggle(BOARD_LED_GPIO_RED, 1U << BOARD_LED_GPIO_PIN_RED);
             /* Reset state of button. */
             g_ButtonPress_SW3 = false;
+            count++;
         }
         if (g_ButtonPress_SW2)
         {
             PRINTF(" %s is pressed \r\n", BOARD_SW_NAME_SW2);
             /* Toggle LED. */
-            GPIO_PortToggle(BOARD_LED_GPIO, 1U << BOARD_LED_GPIO_PIN);
+            GPIO_PortToggle(BOARD_LED_GPIO_BLUE, 1U << BOARD_LED_GPIO_PIN_BLUE);
             /* Reset state of button. */
             g_ButtonPress_SW2 = false;
+            count++;
+        }
+        if( count == 4 )
+        {
+			PRINTF(" Counter reached 4!\r\n");
+			GPIO_PortSet(BOARD_LED_GPIO_RED, 1U << BOARD_LED_GPIO_PIN_RED);
+			GPIO_PortSet(BOARD_LED_GPIO_BLUE, 1U << BOARD_LED_GPIO_PIN_BLUE);
+			/* Toggle LED. */
+			GPIO_PortClear(BOARD_LED_GPIO_GREEN, 1U << BOARD_LED_GPIO_PIN_GREEN);
+			delay();
+			delay();
+			delay();
+			GPIO_PortSet(BOARD_LED_GPIO_GREEN, 1U << BOARD_LED_GPIO_PIN_GREEN);
+			/* Reset state of button. */
+			count = 0;
         }
 
     }
