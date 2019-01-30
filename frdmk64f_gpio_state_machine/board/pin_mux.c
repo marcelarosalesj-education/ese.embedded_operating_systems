@@ -24,6 +24,7 @@ processor_version: 2.0.0
 
 
 #define PIN4_IDX                         4u   /*!< Pin number for pin 4 in a port */
+#define PIN6_IDX                         6u   /*!< Pin number for pin 4 in a port */
 #define PIN16_IDX                       16u   /*!< Pin number for pin 16 in a port */
 #define PIN17_IDX                       17u   /*!< Pin number for pin 17 in a port */
 #define PIN22_IDX                       22u   /*!< Pin number for pin 22 in a port */
@@ -51,6 +52,7 @@ BOARD_InitPins:
 void BOARD_InitPins(void) {
   CLOCK_EnableClock(kCLOCK_PortA);                           /* Port A Clock Gate Control: Clock enabled */
   CLOCK_EnableClock(kCLOCK_PortB);                           /* Port B Clock Gate Control: Clock enabled */
+  CLOCK_EnableClock(kCLOCK_PortC);                           /* Port B Clock Gate Control: Clock enabled */
 
   const port_pin_config_t porta4_pin38_config = {
     kPORT_PullUp,                                            /* Internal pull-up resistor is enabled */
@@ -65,6 +67,7 @@ void BOARD_InitPins(void) {
   PORT_SetPinMux(PORTB, PIN16_IDX, kPORT_MuxAlt3);           /* PORTB16 (pin 62) is configured as UART0_RX */
   PORT_SetPinMux(PORTB, PIN17_IDX, kPORT_MuxAlt3);           /* PORTB17 (pin 63) is configured as UART0_TX */
   PORT_SetPinMux(PORTB, PIN22_IDX, kPORT_MuxAsGpio);         /* PORTB22 (pin 68) is configured as PTB22 */
+  PORT_SetPinConfig(PORTC, PIN6_IDX, &porta4_pin38_config);  /* PORTA4 (pin 38) is configured as PTA4 */
   SIM->SOPT5 = ((SIM->SOPT5 &
     (~(SIM_SOPT5_UART0TXSRC_MASK)))                          /* Mask bits to zero which are setting */
       | SIM_SOPT5_UART0TXSRC(SOPT5_UART0TXSRC_UART_TX)       /* UART 0 transmit data source select: UART0_TX pin */
