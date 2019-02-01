@@ -108,6 +108,81 @@ void delay(void)
     }
 }
 
+enum states { CYAN_ON, MAGENTA_ON, YELLOW_ON, RED_ON, GREEN_ON, BLUE_ON, MAX_STATES } current_state;
+enum events { SW2_ON, SW3_ON, MAX_EVENTS } new_event;
+
+void state_cyan_sw2(void) {
+	printf("\r\n cyan sw 2\r\n");
+	current_state = MAGENTA_ON;
+}
+
+void state_cyan_sw3(void) {
+	printf("\r\n cyan sw 3\r\n");
+	current_state = RED_ON;
+}
+
+void state_magenta_sw2(void) {
+	printf("\r\n magenta sw 2\r\n");
+	current_state = YELLOW_ON;
+}
+
+void state_magenta_sw3(void) {
+	printf("\r\n magenta sw 3\r\n");
+	current_state = GREEN_ON;
+}
+
+void state_yellow_sw2(void) {
+	printf("\r\n yellow sw 2\r\n");
+	current_state = CYAN_ON;
+}
+
+void state_yellow_sw3(void) {
+	printf("\r\n yellow sw 3\r\n");
+	current_state = BLUE_ON;
+}
+void state_red_sw2(void) {
+	printf("\r\n red sw 2\r\n");
+	current_state = GREEN_ON;
+}
+
+void state_red_sw3(void) {
+	printf("\r\n red sw 3\r\n");
+	current_state = CYAN_ON;
+}
+
+void state_green_sw2(void) {
+	printf("\r\n green sw 2\r\n");
+	current_state = BLUE_ON;
+}
+
+void state_green_sw3(void) {
+	printf("\r\n green sw 3\r\n");
+	current_state = MAGENTA_ON;
+}
+
+void state_blue_sw2(void) {
+	printf("\r\n blue sw 2\r\n");
+	current_state = RED_ON;
+}
+
+void state_blue_sw3(void) {
+	printf("\r\n blue sw 3\r\n");
+	current_state = YELLOW_ON;
+
+}
+
+
+void (*const state_table [MAX_STATES][MAX_EVENTS]) (void) = {
+
+    { state_cyan_sw2, state_cyan_sw3 }, /* procedures for state 1 */
+    { state_magenta_sw2, state_magenta_sw3 }, /* procedures for state 1 */
+    { state_yellow_sw2, state_yellow_sw3 }, /* procedures for state 1 */
+    { state_red_sw2, state_red_sw3 }, /* procedures for state 1 */
+    { state_green_sw2, state_green_sw3 }, /* procedures for state 1 */
+    { state_blue_sw2, state_blue_sw3 } /* procedures for state 1 */
+};
+
+
 /*!
  * @brief Main function
  */
@@ -156,6 +231,8 @@ int main(void)
     GPIO_PortSet(BOARD_LED_GPIO_BLUE, 1U << BOARD_LED_GPIO_PIN_BLUE);
     GPIO_PortSet(BOARD_LED_GPIO_GREEN, 1U << BOARD_LED_GPIO_PIN_GREEN);
 
+    new_event = RED_ON;
+    current_state = SW2_ON;
     while (1)
     {
         if (g_ButtonPress_SW3)
