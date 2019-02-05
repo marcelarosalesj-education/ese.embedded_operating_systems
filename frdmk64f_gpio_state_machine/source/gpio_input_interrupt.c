@@ -61,6 +61,116 @@ volatile bool g_ButtonPress_SW2 = false;
 /*******************************************************************************
  * Code
  ******************************************************************************/
+
+// states
+void state_red(void);
+void state_green(void);
+void state_blue(void);
+void state_cyan(void);
+void state_magenta(void);
+void state_yellow(void);
+void turn_off_leds(void);
+void delay(void);
+
+// State pointer
+void (*statefunc)() = state_red;
+
+void delay(void) {
+    volatile uint32_t i = 0;
+    for (i = 0; i < 800000; ++i)
+    {
+        __asm("NOP"); /* delay */
+    }
+}
+
+void turn_off_leds(void){
+	GPIO_PortSet(BOARD_LED_GPIO_RED, 1U << BOARD_LED_GPIO_PIN_RED);
+	GPIO_PortSet(BOARD_LED_GPIO_BLUE, 1U << BOARD_LED_GPIO_PIN_BLUE);
+	GPIO_PortSet(BOARD_LED_GPIO_GREEN, 1U << BOARD_LED_GPIO_PIN_GREEN);
+}
+
+void state_red(void) {
+	printf("\r\n RED \r\n");
+	turn_off_leds();
+	GPIO_PortClear(BOARD_LED_GPIO_RED, 1U << BOARD_LED_GPIO_PIN_RED);
+	if(g_ButtonPress_SW2 == true) {
+		statefunc = state_green;
+		g_ButtonPress_SW2 = false;
+	} else if (g_ButtonPress_SW3 == true) {
+		statefunc = state_cyan;
+		g_ButtonPress_SW3 = false;
+	}
+}
+
+void state_green(void) {
+	printf("\r\n GREEN \r\n");
+	turn_off_leds();
+	GPIO_PortClear(BOARD_LED_GPIO_GREEN, 1U << BOARD_LED_GPIO_PIN_GREEN);
+	if(g_ButtonPress_SW2 == true) {
+		statefunc = state_blue;
+		g_ButtonPress_SW2 = false;
+	} else if (g_ButtonPress_SW3 == true) {
+		statefunc = state_magenta;
+		g_ButtonPress_SW3 = false;
+	}
+}
+
+void state_blue(void) {
+	printf("\r\n BLUE \r\n");
+	turn_off_leds();
+	GPIO_PortClear(BOARD_LED_GPIO_BLUE, 1U << BOARD_LED_GPIO_PIN_BLUE);
+	if(g_ButtonPress_SW2 == true) {
+		statefunc = state_red;
+		g_ButtonPress_SW2 = false;
+	} else if (g_ButtonPress_SW3 == true) {
+		statefunc = state_yellow;
+		g_ButtonPress_SW3 = false;
+	}
+}
+
+void state_cyan(void) {
+	printf("\r\n CYAN \r\n");
+	turn_off_leds();
+	GPIO_PortClear(BOARD_LED_GPIO_GREEN, 1U << BOARD_LED_GPIO_PIN_GREEN);
+	GPIO_PortClear(BOARD_LED_GPIO_BLUE, 1U << BOARD_LED_GPIO_PIN_BLUE);
+	if(g_ButtonPress_SW2 == true) {
+		statefunc = state_magenta;
+		g_ButtonPress_SW2 = false;
+	} else if (g_ButtonPress_SW3 == true) {
+		statefunc = state_red;
+		g_ButtonPress_SW3 = false;
+	}
+}
+
+void state_magenta(void) {
+	printf("\r\n MAGENTA \r\n");
+	turn_off_leds();
+	GPIO_PortClear(BOARD_LED_GPIO_RED, 1U << BOARD_LED_GPIO_PIN_RED);
+	GPIO_PortClear(BOARD_LED_GPIO_BLUE, 1U << BOARD_LED_GPIO_PIN_BLUE);
+	if(g_ButtonPress_SW2 == true) {
+		statefunc = state_yellow;
+		g_ButtonPress_SW2 = false;
+	} else if (g_ButtonPress_SW3 == true) {
+		statefunc = state_green;
+		g_ButtonPress_SW3 = false;
+	}
+}
+
+void state_yellow(void) {
+	printf("\r\n YELLOW \r\n");
+	turn_off_leds();
+	GPIO_PortClear(BOARD_LED_GPIO_RED, 1U << BOARD_LED_GPIO_PIN_RED);
+	GPIO_PortClear(BOARD_LED_GPIO_GREEN, 1U << BOARD_LED_GPIO_PIN_GREEN);
+	if(g_ButtonPress_SW2 == true) {
+		statefunc = state_cyan;
+		g_ButtonPress_SW2 = false;
+	} else if (g_ButtonPress_SW3 == true) {
+		statefunc = state_blue;
+		g_ButtonPress_SW3 = false;
+	}
+}
+
+
 /*!
  * @brief Interrupt service fuction of switch 3.
  *
@@ -99,96 +209,11 @@ void BOARD_SW_IRQ_HANDLER_SW2(void)
 #endif
 }
 
-void delay(void)
-{
-    volatile uint32_t i = 0;
-    for (i = 0; i < 800000; ++i)
-    {
-        __asm("NOP"); /* delay */
-    }
-}
-
-enum states { CYAN_ON, MAGENTA_ON, YELLOW_ON, RED_ON, GREEN_ON, BLUE_ON, MAX_STATES } current_state;
-enum events { SW2_ON, SW3_ON, MAX_EVENTS } new_event;
-
-void state_cyan_sw2(void) {
-	printf("\r\n cyan sw 2\r\n");
-	current_state = MAGENTA_ON;
-}
-
-void state_cyan_sw3(void) {
-	printf("\r\n cyan sw 3\r\n");
-	current_state = RED_ON;
-}
-
-void state_magenta_sw2(void) {
-	printf("\r\n magenta sw 2\r\n");
-	current_state = YELLOW_ON;
-}
-
-void state_magenta_sw3(void) {
-	printf("\r\n magenta sw 3\r\n");
-	current_state = GREEN_ON;
-}
-
-void state_yellow_sw2(void) {
-	printf("\r\n yellow sw 2\r\n");
-	current_state = CYAN_ON;
-}
-
-void state_yellow_sw3(void) {
-	printf("\r\n yellow sw 3\r\n");
-	current_state = BLUE_ON;
-}
-void state_red_sw2(void) {
-	printf("\r\n red sw 2\r\n");
-	current_state = GREEN_ON;
-}
-
-void state_red_sw3(void) {
-	printf("\r\n red sw 3\r\n");
-	current_state = CYAN_ON;
-}
-
-void state_green_sw2(void) {
-	printf("\r\n green sw 2\r\n");
-	current_state = BLUE_ON;
-}
-
-void state_green_sw3(void) {
-	printf("\r\n green sw 3\r\n");
-	current_state = MAGENTA_ON;
-}
-
-void state_blue_sw2(void) {
-	printf("\r\n blue sw 2\r\n");
-	current_state = RED_ON;
-}
-
-void state_blue_sw3(void) {
-	printf("\r\n blue sw 3\r\n");
-	current_state = YELLOW_ON;
-
-}
-
-
-void (*const state_table [MAX_STATES][MAX_EVENTS]) (void) = {
-
-    { state_cyan_sw2, state_cyan_sw3 }, /* procedures for state 1 */
-    { state_magenta_sw2, state_magenta_sw3 }, /* procedures for state 1 */
-    { state_yellow_sw2, state_yellow_sw3 }, /* procedures for state 1 */
-    { state_red_sw2, state_red_sw3 }, /* procedures for state 1 */
-    { state_green_sw2, state_green_sw3 }, /* procedures for state 1 */
-    { state_blue_sw2, state_blue_sw3 } /* procedures for state 1 */
-};
-
-
 /*!
  * @brief Main function
  */
 int main(void)
 {
-	int count = 0;
     /* Define the init structure for the input switch pin */
     gpio_pin_config_t sw_config = {
         kGPIO_DigitalInput, 0,
@@ -204,8 +229,9 @@ int main(void)
     BOARD_InitDebugConsole();
 
     /* Print a note to terminal. */
-    PRINTF("\r\n GPIO Driver example\r\n");
-    PRINTF("\r\n Press %s to turn on/off a LED \r\n", BOARD_SW_NAME_SW3);
+    PRINTF("\r\n RGB/CMY State Machine\r\n");
+    PRINTF("\r\n SW2 to switch color in the color space \r\n");
+    PRINTF("\r\n SW3 to switch RGB<->CMY \r\n");
 
 /* Init input switch 2 and 3 GPIO. */
 #if (defined(FSL_FEATURE_PORT_HAS_NO_INTERRUPT) && FSL_FEATURE_PORT_HAS_NO_INTERRUPT)
@@ -227,46 +253,10 @@ int main(void)
     GPIO_PinInit(BOARD_LED_GPIO_GREEN, BOARD_LED_GPIO_PIN_GREEN, &led_config);
 
     /* Turn Off LEDs before start */
-    GPIO_PortSet(BOARD_LED_GPIO_RED, 1U << BOARD_LED_GPIO_PIN_RED);
-    GPIO_PortSet(BOARD_LED_GPIO_BLUE, 1U << BOARD_LED_GPIO_PIN_BLUE);
-    GPIO_PortSet(BOARD_LED_GPIO_GREEN, 1U << BOARD_LED_GPIO_PIN_GREEN);
+    turn_off_leds();
 
-    new_event = RED_ON;
-    current_state = SW2_ON;
     while (1)
     {
-        if (g_ButtonPress_SW3)
-        {
-            PRINTF(" %s is pressed \r\n", BOARD_SW_NAME_SW3);
-            /* Toggle LED. */
-            GPIO_PortToggle(BOARD_LED_GPIO_RED, 1U << BOARD_LED_GPIO_PIN_RED);
-            /* Reset state of button. */
-            g_ButtonPress_SW3 = false;
-            count++;
-        }
-        if (g_ButtonPress_SW2)
-        {
-            PRINTF(" %s is pressed \r\n", BOARD_SW_NAME_SW2);
-            /* Toggle LED. */
-            GPIO_PortToggle(BOARD_LED_GPIO_BLUE, 1U << BOARD_LED_GPIO_PIN_BLUE);
-            /* Reset state of button. */
-            g_ButtonPress_SW2 = false;
-            count++;
-        }
-        if( count == 4 )
-        {
-			PRINTF(" Counter reached 4!\r\n");
-			GPIO_PortSet(BOARD_LED_GPIO_RED, 1U << BOARD_LED_GPIO_PIN_RED);
-			GPIO_PortSet(BOARD_LED_GPIO_BLUE, 1U << BOARD_LED_GPIO_PIN_BLUE);
-			/* Toggle LED. */
-			GPIO_PortClear(BOARD_LED_GPIO_GREEN, 1U << BOARD_LED_GPIO_PIN_GREEN);
-			delay();
-			delay();
-			delay();
-			GPIO_PortSet(BOARD_LED_GPIO_GREEN, 1U << BOARD_LED_GPIO_PIN_GREEN);
-			/* Reset state of button. */
-			count = 0;
-        }
-
+    	(*statefunc)();
     }
 }
