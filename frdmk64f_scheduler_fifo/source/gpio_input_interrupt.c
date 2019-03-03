@@ -74,10 +74,13 @@ volatile bool g_ButtonPress_SW2 = false;
 typedef void (*mTaskType)();
 mTaskType mTaskArray[MAXTASKS] = { NULL };
 int pos = 0;
+int localPos = 0;
 typedef enum {
 	R_OK,
 	R_NOT_OK
 } Response;
+
+
 
 /*******************************************************************************
  * Code
@@ -94,20 +97,35 @@ Response mTaskCreate(mTaskType newTask){
 }
 
 void mSchedulerStart(){
-	int localPos = 0;
 	while(1){
 		if(localPos == MAXTASKS) {
 			localPos = 0;
 		}
-		mTaskArray[localPos]();
+		if(mTaskArray[localPos] != NULL){
+			mTaskArray[localPos]();
+		}
 		localPos++;
 
 	}
 }
 
+Response mTaskDelete(int pos){
+	if(pos < MAXTASKS){
+		mTaskArray[pos] = NULL;
+		return R_OK;
+	} else {
+		return R_NOT_OK;
+	}
+}
+
+
+void delete_this_task(){
+	mTaskDelete(localPos);
+}
+
 void delay(void) {
     volatile uint32_t i = 0;
-    for (i = 0; i < 800000; ++i)
+    for (i = 0; i < 8000000; ++i)
     {
         __asm("NOP"); /* delay */
     }
@@ -124,7 +142,7 @@ void task_red(void) {
 	turn_off_leds();
 	GPIO_PortClear(BOARD_LED_GPIO_RED, 1U << BOARD_LED_GPIO_PIN_RED);
 	delay();
-	delay();
+	turn_off_leds();
 }
 
 void task_green(void) {
@@ -132,7 +150,7 @@ void task_green(void) {
 	turn_off_leds();
 	GPIO_PortClear(BOARD_LED_GPIO_GREEN, 1U << BOARD_LED_GPIO_PIN_GREEN);
 	delay();
-	delay();
+	turn_off_leds();
 }
 
 void task_blue(void) {
@@ -140,7 +158,7 @@ void task_blue(void) {
 	turn_off_leds();
 	GPIO_PortClear(BOARD_LED_GPIO_BLUE, 1U << BOARD_LED_GPIO_PIN_BLUE);
 	delay();
-	delay();
+	turn_off_leds();
 }
 
 void task_cyan(void) {
@@ -149,7 +167,7 @@ void task_cyan(void) {
 	GPIO_PortClear(BOARD_LED_GPIO_GREEN, 1U << BOARD_LED_GPIO_PIN_GREEN);
 	GPIO_PortClear(BOARD_LED_GPIO_BLUE, 1U << BOARD_LED_GPIO_PIN_BLUE);
 	delay();
-	delay();
+	turn_off_leds();
 }
 
 void task_magenta(void) {
@@ -158,7 +176,7 @@ void task_magenta(void) {
 	GPIO_PortClear(BOARD_LED_GPIO_RED, 1U << BOARD_LED_GPIO_PIN_RED);
 	GPIO_PortClear(BOARD_LED_GPIO_BLUE, 1U << BOARD_LED_GPIO_PIN_BLUE);
 	delay();
-	delay();
+	turn_off_leds();
 }
 
 void task_yellow(void) {
@@ -167,7 +185,7 @@ void task_yellow(void) {
 	GPIO_PortClear(BOARD_LED_GPIO_RED, 1U << BOARD_LED_GPIO_PIN_RED);
 	GPIO_PortClear(BOARD_LED_GPIO_GREEN, 1U << BOARD_LED_GPIO_PIN_GREEN);
 	delay();
-	delay();
+	turn_off_leds();
 }
 
 
@@ -183,6 +201,7 @@ void BOARD_SW_IRQ_HANDLER_SW3(void)
     /* Change state of button. */
     PRINTF("\r\n H_SW3\r\n");
     g_ButtonPress_SW3 = true;
+    delete_this_task();
 /* Add for ARM errata 838869, affects Cortex-M4, Cortex-M4F Store immediate overlapping
   exception return operation might vector to incorrect interrupt */
 #if defined __CORTEX_M && (__CORTEX_M == 4U)
