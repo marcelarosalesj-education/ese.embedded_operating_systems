@@ -50,6 +50,18 @@
  * Prototypes
  ******************************************************************************/
 
+/* Tasks */
+void task_red(void);
+void tast_green(void);
+void task_blue(void);
+void task_cyan(void);
+void task_magenta(void);
+void task_yellow(void);
+
+/* Functions */
+void turn_off_leds(void);
+void delay(void);
+
 /*******************************************************************************
  * Variables
  ******************************************************************************/
@@ -57,23 +69,41 @@
 volatile bool g_ButtonPress_SW3 = false;
 volatile bool g_ButtonPress_SW2 = false;
 
+/* Scheduler Variables */
+#define MAXTASKS	6
+typedef void (*mTaskType)();
+mTaskType mTaskArray[MAXTASKS] = { NULL };
+int pos = 0;
+typedef enum {
+	R_OK,
+	R_NOT_OK
+} Response;
 
 /*******************************************************************************
  * Code
  ******************************************************************************/
 
-// states
-void state_red(void);
-void state_green(void);
-void state_blue(void);
-void state_cyan(void);
-void state_magenta(void);
-void state_yellow(void);
-void turn_off_leds(void);
-void delay(void);
+Response mTaskCreate(mTaskType newTask){
+	if(pos < MAXTASKS){
+		mTaskArray[pos] = newTask;
+		pos++;
+		return R_OK;
+	} else {
+		return R_NOT_OK;
+	}
+}
 
-// State pointer
-void (*statefunc)() = state_red;
+void mSchedulerStart(){
+	int localPos = 0;
+	while(1){
+		if(localPos == MAXTASKS) {
+			localPos = 0;
+		}
+		mTaskArray[localPos]();
+		localPos++;
+
+	}
+}
 
 void delay(void) {
     volatile uint32_t i = 0;
@@ -89,85 +119,55 @@ void turn_off_leds(void){
 	GPIO_PortSet(BOARD_LED_GPIO_GREEN, 1U << BOARD_LED_GPIO_PIN_GREEN);
 }
 
-void state_red(void) {
+void task_red(void) {
 	printf("\r\n RED \r\n");
 	turn_off_leds();
 	GPIO_PortClear(BOARD_LED_GPIO_RED, 1U << BOARD_LED_GPIO_PIN_RED);
-	if(g_ButtonPress_SW2 == true) {
-		statefunc = state_green;
-		g_ButtonPress_SW2 = false;
-	} else if (g_ButtonPress_SW3 == true) {
-		statefunc = state_cyan;
-		g_ButtonPress_SW3 = false;
-	}
+	delay();
+	delay();
 }
 
-void state_green(void) {
+void task_green(void) {
 	printf("\r\n GREEN \r\n");
 	turn_off_leds();
 	GPIO_PortClear(BOARD_LED_GPIO_GREEN, 1U << BOARD_LED_GPIO_PIN_GREEN);
-	if(g_ButtonPress_SW2 == true) {
-		statefunc = state_blue;
-		g_ButtonPress_SW2 = false;
-	} else if (g_ButtonPress_SW3 == true) {
-		statefunc = state_magenta;
-		g_ButtonPress_SW3 = false;
-	}
+	delay();
+	delay();
 }
 
-void state_blue(void) {
+void task_blue(void) {
 	printf("\r\n BLUE \r\n");
 	turn_off_leds();
 	GPIO_PortClear(BOARD_LED_GPIO_BLUE, 1U << BOARD_LED_GPIO_PIN_BLUE);
-	if(g_ButtonPress_SW2 == true) {
-		statefunc = state_red;
-		g_ButtonPress_SW2 = false;
-	} else if (g_ButtonPress_SW3 == true) {
-		statefunc = state_yellow;
-		g_ButtonPress_SW3 = false;
-	}
+	delay();
+	delay();
 }
 
-void state_cyan(void) {
+void task_cyan(void) {
 	printf("\r\n CYAN \r\n");
 	turn_off_leds();
 	GPIO_PortClear(BOARD_LED_GPIO_GREEN, 1U << BOARD_LED_GPIO_PIN_GREEN);
 	GPIO_PortClear(BOARD_LED_GPIO_BLUE, 1U << BOARD_LED_GPIO_PIN_BLUE);
-	if(g_ButtonPress_SW2 == true) {
-		statefunc = state_magenta;
-		g_ButtonPress_SW2 = false;
-	} else if (g_ButtonPress_SW3 == true) {
-		statefunc = state_red;
-		g_ButtonPress_SW3 = false;
-	}
+	delay();
+	delay();
 }
 
-void state_magenta(void) {
+void task_magenta(void) {
 	printf("\r\n MAGENTA \r\n");
 	turn_off_leds();
 	GPIO_PortClear(BOARD_LED_GPIO_RED, 1U << BOARD_LED_GPIO_PIN_RED);
 	GPIO_PortClear(BOARD_LED_GPIO_BLUE, 1U << BOARD_LED_GPIO_PIN_BLUE);
-	if(g_ButtonPress_SW2 == true) {
-		statefunc = state_yellow;
-		g_ButtonPress_SW2 = false;
-	} else if (g_ButtonPress_SW3 == true) {
-		statefunc = state_green;
-		g_ButtonPress_SW3 = false;
-	}
+	delay();
+	delay();
 }
 
-void state_yellow(void) {
+void task_yellow(void) {
 	printf("\r\n YELLOW \r\n");
 	turn_off_leds();
 	GPIO_PortClear(BOARD_LED_GPIO_RED, 1U << BOARD_LED_GPIO_PIN_RED);
 	GPIO_PortClear(BOARD_LED_GPIO_GREEN, 1U << BOARD_LED_GPIO_PIN_GREEN);
-	if(g_ButtonPress_SW2 == true) {
-		statefunc = state_cyan;
-		g_ButtonPress_SW2 = false;
-	} else if (g_ButtonPress_SW3 == true) {
-		statefunc = state_blue;
-		g_ButtonPress_SW3 = false;
-	}
+	delay();
+	delay();
 }
 
 
@@ -255,8 +255,26 @@ int main(void)
     /* Turn Off LEDs before start */
     turn_off_leds();
 
-    while (1)
-    {
-    	(*statefunc)();
+    /* Create Tasks */
+    if(mTaskCreate(task_red) == R_NOT_OK){
+        printf("Error creating task /n/r");
     }
+    if(mTaskCreate(task_green) == R_NOT_OK){
+        printf("Error creating task /n/r");
+    }
+    if(mTaskCreate(task_blue) == R_NOT_OK){
+        printf("Error creating task /n/r");
+    }
+    if(mTaskCreate(task_cyan) == R_NOT_OK){
+        printf("Error creating task /n/r");
+    }
+    if(mTaskCreate(task_magenta) == R_NOT_OK){
+        printf("Error creating task /n/r");
+    }
+    if(mTaskCreate(task_yellow) == R_NOT_OK){
+        printf("Error creating task /n/r");
+    }
+
+    /* Start Scheduler */
+    mSchedulerStart();
 }
