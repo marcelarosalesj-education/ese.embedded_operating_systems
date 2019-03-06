@@ -81,46 +81,78 @@ typedef enum {
 } Response;
 
 
+typedef struct mTaskNode {
+	struct mTaskNode* next;
+	int value;
+	mTaskType func;
+}mTaskNode;
+
+struct mTaskNode *head = NULL;
+int coolVar=0;
+
 
 /*******************************************************************************
  * Code
  ******************************************************************************/
 
-Response mTaskCreate(mTaskType newTask){
-	if(pos < MAXTASKS){
-		mTaskArray[pos] = newTask;
-		pos++;
-		return R_OK;
-	} else {
+struct mTaskNode* create_node(mTaskType fnt){
+	struct mTaskNode *node = (struct mTaskNode*)malloc(sizeof(struct mTaskNode));
+	if(node == NULL){
+		return NULL;
+	}
+	(*node).next = NULL;
+	(*node).value = coolVar;
+	(*node).func = fnt;
+	coolVar++;
+	return node;
+}
+
+Response mTaskCreate(mTaskType newTask) {
+
+	struct mTaskNode *node = create_node(newTask);
+	if(node == NULL){
+		printf("Error creating task.\n\r");
 		return R_NOT_OK;
 	}
+
+	if(head == NULL){
+		/* First node to add */
+		head = node;
+	} else {
+		/* Many more nodes */
+		struct mTaskNode *aux = head;
+		while( (*aux).next != NULL ){
+				aux = (*aux).next;
+		}
+		(*aux).next = node;
+	}
+
+	return R_OK;
+
 }
 
 void mSchedulerStart(){
+	struct mTaskNode *aux = head;
 	while(1){
-		if(localPos == MAXTASKS) {
-			localPos = 0;
+		printf("N(%p) = %d \n\r", aux, (*aux).value );
+		(*aux).func();
+		aux = (*aux).next;
+		if( aux == NULL ){
+			aux = head;
 		}
-		if(mTaskArray[localPos] != NULL){
-			mTaskArray[localPos]();
-		}
-		localPos++;
-
 	}
+	printf("End of scheduler");
 }
 
-Response mTaskDelete(int pos){
-	if(pos < MAXTASKS){
-		mTaskArray[pos] = NULL;
-		return R_OK;
-	} else {
-		return R_NOT_OK;
-	}
+Response mTaskDelete(struct mTaskNode* task){
+	printf("N(%p) = %d \n\r", task, (*task).value );
+	return R_OK;
+
 }
 
 
 void delete_this_task(){
-	mTaskDelete(localPos);
+	/**/
 }
 
 void delay(void) {
@@ -296,4 +328,6 @@ int main(void)
 
     /* Start Scheduler */
     mSchedulerStart();
+
+    return 0;
 }
