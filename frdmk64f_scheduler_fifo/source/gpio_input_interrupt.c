@@ -81,46 +81,116 @@ typedef enum {
 } Response;
 
 
+typedef struct mTaskNode {
+	struct mTaskNode* next;
+	struct mTaskNode* prev;
+	int value;
+	mTaskType func;
+}mTaskNode;
+
+struct mTaskNode *head = NULL;
+int coolVar = 0;
+struct mTaskNode *currentTask = NULL;
 
 /*******************************************************************************
  * Code
  ******************************************************************************/
 
-Response mTaskCreate(mTaskType newTask){
-	if(pos < MAXTASKS){
-		mTaskArray[pos] = newTask;
-		pos++;
-		return R_OK;
-	} else {
+struct mTaskNode* create_node(mTaskType fnt){
+	struct mTaskNode *node = (struct mTaskNode*)malloc(sizeof(struct mTaskNode));
+	if(node == NULL){
+		return NULL;
+	}
+	(*node).next = NULL;
+	(*node).prev = NULL;
+	(*node).value = coolVar;
+	(*node).func = fnt;
+	coolVar++;
+	return node;
+}
+
+Response mTaskCreate(mTaskType newTask) {
+
+	struct mTaskNode *node = create_node(newTask);
+	if(node == NULL){
+		printf("Error creating task.\n\r");
 		return R_NOT_OK;
 	}
+
+	if(head == NULL){
+		/* First node to add */
+		head = node;
+	} else {
+		/* Many more nodes */
+		struct mTaskNode *aux = head;
+		while( (*aux).next != NULL ){
+				aux = (*aux).next;
+		}
+		(*aux).next = node;
+		(*node).prev = aux;
+	}
+
+	return R_OK;
+
 }
 
 void mSchedulerStart(){
+	currentTask = head;
 	while(1){
-		if(localPos == MAXTASKS) {
-			localPos = 0;
+		printf("N(%p) = %d ( prev(%d) ) \n\r", currentTask, (*currentTask).value, (*(*currentTask).prev).value );
+		(*currentTask).func();
+		currentTask = (*currentTask).next;
+		if( currentTask == NULL ){
+			currentTask = head;
 		}
-		if(mTaskArray[localPos] != NULL){
-			mTaskArray[localPos]();
-		}
-		localPos++;
-
 	}
+	printf("End of scheduler");
 }
 
-Response mTaskDelete(int pos){
-	if(pos < MAXTASKS){
-		mTaskArray[pos] = NULL;
-		return R_OK;
+Response mTaskDelete(struct mTaskNode *task){
+	printf("Deleting Value %d \n\r", (*task).value);
+
+	printf("Now (%d) points to (%d) \n\r", (*(*task).prev).value,  (*(*task).next).value);
+	printf("Deleting N(%p) = %d \n\r", task, (*task).value );
+
+
+	if( (*task).next == NULL && (*task).prev == NULL ){
+		/* It's the only node */
+		printf("only node\n\r");
+		head = NULL;
+	} else if((*task).next == NULL){
+		/* It's the last node */
+		printf("last node\n\r");
+		(*(*task).prev).next = NULL;
+	} else if((*task).prev != NULL ){
+		printf("middle node\n\r");
+		/* let task's prev next point to task's next */
+		(*(*task).prev).next = (*task).next;
+		/* let task's next prev point to task's prev */
+		(*(*task).next).prev = (*task).prev;
 	} else {
-		return R_NOT_OK;
+		printf("first node\n\r");
+		/* It's the first node. Now task's next is the head and its prev points to NULL */
+		(*(*task).next).prev = NULL;
+		head = (*task).next;
 	}
-}
 
+	free(task);
+
+	return R_OK;
+
+}
 
 void delete_this_task(){
-	mTaskDelete(localPos);
+	/**/
+	mTaskDelete(currentTask);
+}
+
+void add_red_task(){
+	printf("Add extra RED task /n/r");
+	if(mTaskCreate(task_red) == R_NOT_OK){
+		printf("Error creating task /n/r");
+	}
 }
 
 void delay(void) {
@@ -138,7 +208,7 @@ void turn_off_leds(void){
 }
 
 void task_red(void) {
-	printf("\r\n RED \r\n");
+	printf("RED \r\n");
 	turn_off_leds();
 	GPIO_PortClear(BOARD_LED_GPIO_RED, 1U << BOARD_LED_GPIO_PIN_RED);
 	delay();
@@ -146,7 +216,7 @@ void task_red(void) {
 }
 
 void task_green(void) {
-	printf("\r\n GREEN \r\n");
+	printf("GREEN \r\n");
 	turn_off_leds();
 	GPIO_PortClear(BOARD_LED_GPIO_GREEN, 1U << BOARD_LED_GPIO_PIN_GREEN);
 	delay();
@@ -154,7 +224,7 @@ void task_green(void) {
 }
 
 void task_blue(void) {
-	printf("\r\n BLUE \r\n");
+	printf("BLUE \r\n");
 	turn_off_leds();
 	GPIO_PortClear(BOARD_LED_GPIO_BLUE, 1U << BOARD_LED_GPIO_PIN_BLUE);
 	delay();
@@ -162,7 +232,7 @@ void task_blue(void) {
 }
 
 void task_cyan(void) {
-	printf("\r\n CYAN \r\n");
+	printf("CYAN \r\n");
 	turn_off_leds();
 	GPIO_PortClear(BOARD_LED_GPIO_GREEN, 1U << BOARD_LED_GPIO_PIN_GREEN);
 	GPIO_PortClear(BOARD_LED_GPIO_BLUE, 1U << BOARD_LED_GPIO_PIN_BLUE);
@@ -171,7 +241,7 @@ void task_cyan(void) {
 }
 
 void task_magenta(void) {
-	printf("\r\n MAGENTA \r\n");
+	printf("MAGENTA \r\n");
 	turn_off_leds();
 	GPIO_PortClear(BOARD_LED_GPIO_RED, 1U << BOARD_LED_GPIO_PIN_RED);
 	GPIO_PortClear(BOARD_LED_GPIO_BLUE, 1U << BOARD_LED_GPIO_PIN_BLUE);
@@ -180,13 +250,14 @@ void task_magenta(void) {
 }
 
 void task_yellow(void) {
-	printf("\r\n YELLOW \r\n");
+	printf("YELLOW \r\n");
 	turn_off_leds();
 	GPIO_PortClear(BOARD_LED_GPIO_RED, 1U << BOARD_LED_GPIO_PIN_RED);
 	GPIO_PortClear(BOARD_LED_GPIO_GREEN, 1U << BOARD_LED_GPIO_PIN_GREEN);
 	delay();
 	turn_off_leds();
 }
+
 
 
 /*!
@@ -221,6 +292,7 @@ void BOARD_SW_IRQ_HANDLER_SW2(void)
     /* Change state of button. */
     PRINTF("\r\n H_SW2\r\n");
     g_ButtonPress_SW2 = true;
+    add_red_task();
 /* Add for ARM errata 838869, affects Cortex-M4, Cortex-M4F Store immediate overlapping
   exception return operation might vector to incorrect interrupt */
 #if defined __CORTEX_M && (__CORTEX_M == 4U)
@@ -296,4 +368,7 @@ int main(void)
 
     /* Start Scheduler */
     mSchedulerStart();
+
+    return 0;
 }
+
