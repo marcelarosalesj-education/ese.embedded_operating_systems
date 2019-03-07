@@ -303,12 +303,14 @@ void task_yellow(void) {
  */
 void BOARD_SW_IRQ_HANDLER_SW3(void)
 {
+    DisableIRQ(BOARD_SW_IRQ_SW3);
     /* Clear external interrupt flag. */
     GPIO_PortClearInterruptFlags(BOARD_SW_GPIO_SW3, 1U << BOARD_SW_GPIO_PIN_SW3);
     /* Change state of button. */
     PRINTF("\r\n H_SW3\r\n");
     g_ButtonPress_SW3 = true;
     delete_this_task();
+    EnableIRQ(BOARD_SW_IRQ_SW3);
 /* Add for ARM errata 838869, affects Cortex-M4, Cortex-M4F Store immediate overlapping
   exception return operation might vector to incorrect interrupt */
 #if defined __CORTEX_M && (__CORTEX_M == 4U)
@@ -323,12 +325,14 @@ void BOARD_SW_IRQ_HANDLER_SW3(void)
  */
 void BOARD_SW_IRQ_HANDLER_SW2(void)
 {
+    DisableIRQ(BOARD_SW_IRQ_SW2);
     /* Clear external interrupt flag. */
     GPIO_PortClearInterruptFlags(BOARD_SW_GPIO_SW2, 1U << BOARD_SW_GPIO_PIN_SW2);
     /* Change state of button. */
     PRINTF("\r\n H_SW2\r\n");
     g_ButtonPress_SW2 = true;
     add_red_task();
+    EnableIRQ(BOARD_SW_IRQ_SW2);
 /* Add for ARM errata 838869, affects Cortex-M4, Cortex-M4F Store immediate overlapping
   exception return operation might vector to incorrect interrupt */
 #if defined __CORTEX_M && (__CORTEX_M == 4U)
