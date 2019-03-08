@@ -68,6 +68,7 @@ void delay(void);
 /* Whether the SW button is pressed */
 volatile bool g_ButtonPress_SW3 = false;
 volatile bool g_ButtonPress_SW2 = false;
+bool restart = false;
 
 /* Scheduler Variables */
 #define MAXTASKS	6
@@ -166,6 +167,7 @@ Response mTaskCreate(mTaskType newTask, int priority) {
 			}
 		}
 	}
+
 	return R_OK;
 
 }
@@ -173,6 +175,10 @@ Response mTaskCreate(mTaskType newTask, int priority) {
 void mSchedulerStart(){
 	currentTask = head;
 	while(1){
+		if(restart){
+			currentTask = head;
+			restart = false;
+		}
 		printf("N(%p) = %d ( prev(%d) ) \n\r", currentTask, (*currentTask).value, (*(*currentTask).prev).value );
 		(*currentTask).func();
 		currentTask = (*currentTask).next;
@@ -224,6 +230,9 @@ void delete_this_task(){
 
 void add_red_task(){
 	printf("Add extra RED task /n/r");
+	if( (*currentTask).priority < 6){
+		restart = true;
+	}
 	if(mTaskCreate(task_red, 6) == R_NOT_OK){
 		printf("Error creating task /n/r");
 	}
